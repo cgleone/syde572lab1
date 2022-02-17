@@ -48,9 +48,6 @@ def create_boundary(classified_grid):
     plt.legend()
     plt.show()
 
-def paint_by_numbers(classified_grid):
-    plt.plot()
-    pass
 
 def get_classified_grid(grid, classifier_function, classes):
 
@@ -99,7 +96,7 @@ def med(x, y, classes):
 
 def ged(x, y, classes):
     """
-
+    Classify a particular point on the grid using GED classification
     :param x: x coord of grid point
     :param y: y coord of grid point
     :param classes: list of cluster objects with mu and sigma information
@@ -167,6 +164,76 @@ def multi_class_map(x, y, classes):
         counter.update(combo[map_classifier(x, y, combo)].name)
     c_pred = counter.most_common(1)[0][0]
     return class_names_to_index[c_pred]
+
+def nn(x, y, classes):
+    """
+    Classify whether x belongs to class K given its nearest neighbour
+    :param x: first dimension of pattern
+    :param y: second dimension of pattern
+    :return: 0, 1 or 2 for the classes
+    """
+    x= np.array([x, y]).reshape(2,1)
+
+    def _euclid_distance(x, c):
+        d = []
+        for i in range(len(c.x[0])):
+            point = np.array([c.x[0][i], c.x[1][i]]).reshape(2,1)
+            d_point = ((x-point).T@(x-point))**(1/2)
+            d.append(d_point)
+        return d
+    
+    min_distances = []
+    
+    for c in classes:
+        distances = _euclid_distance(x, c)
+        min_distance = min(distances)
+        min_distances.append(min_distance)
+    
+    index = min_distances.index(min(min_distances))
+    return index
+
+def knn(x, y, classes):
+    """
+    Classify whether x belongs to class K based on K-nearest neighbour (K=5)
+    :param x: first dimension of pattern
+    :param y: second dimension of pattern
+    :return: 0, 1, or 2 for the class
+    """
+    x= np.array([x, y]).reshape(2,1)
+    
+    def _euclid_distance(x, c):
+        d = []
+        for i in range(len(c.x[0])):
+            point = np.array([c.x[0][i], c.x[1][i]]).reshape(2,1)
+            d_point = ((x-point).T@(x-point))**(1/2)
+            d.append(d_point)
+        return d
+    
+    average_min_distances = []
+    for c in classes:
+        distances = _euclid_distance(x, c)
+        distances.sort()
+        top_5 = distances[0:5]
+        average_min_distance = sum(top_5)/len(top_5)
+        average_min_distances.append(average_min_distance)
+    
+    index = average_min_distances.index(min(average_min_distances))
+    return index
+
+    
+    
+    
+    return
+
+
+    # all_points =[]
+    # for c in classes:
+    #     all_points.append(c.x)
+
+    # closest = min(all_points, key= lambda i: _euclid_distance(x, i)
+        
+    
+    return 
 
 
 
