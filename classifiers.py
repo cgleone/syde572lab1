@@ -6,26 +6,6 @@ from collections import Counter
 import itertools
 
 
-def create_grid(xmin=-10, xmax=30, ymin=-10, ymax=30):
-    """
-
-    :param xmin: minimum x value
-    :param xmax: maximum x value for grid
-    :param ymin: minimum y value for grid
-    :param ymax: maximum y value for grid
-    :return: grid list of lists
-    """
-    x = np.linspace(xmin, xmax, xmax-xmin+1)
-    y = np.linspace(ymin, ymax, ymax-ymin+1)
-
-    grid = []
-    for y_coord in y:
-        row_list = []
-        for x_coord in x:
-            row_list.append(x_coord)
-        grid.append(row_list)
-
-    return grid
 
 def create_boundary(classified_grid):
 
@@ -52,19 +32,11 @@ def paint_by_numbers(classified_grid):
     plt.plot()
     pass
 
-def get_classified_grid(grid, classifier_function, classes):
 
-    classified_grid = []
-    y_coord = 30  # start at the top
-    for row in grid:
-        row_list = []
-        for x_coord in row:
-            assigned_class = classifier_function(x_coord, y_coord, classes)
-            row_list.append(assigned_class)
-        classified_grid.append(row_list)
-        y_coord = y_coord - 1
+def get_classified_grid(x_coords, y_coords, classifier_function, classes):
 
-    return classified_grid
+    grid = classifier_function(x_coords, y_coords, classes)
+    return grid
 
 """
 xs = np.arange(-8, 8, 0.1)
@@ -175,9 +147,20 @@ if __name__ == '__main__':
     case_1_classes = [generating_clusters.class_a, generating_clusters.class_b]
     case_2_classes = [generating_clusters.class_c, generating_clusters.class_d, generating_clusters.class_e]
 
-    grid = create_grid()
-    classified_grid = get_classified_grid(grid, ged, case_1_classes)
+    ymin, ymax, xmin, xmax = -10, 30, -10, 30
+    step = 1
+    x = np.linspace(xmin, xmax, int((xmax-xmin+1)/step))
+    y = np.linspace(ymin, ymax, ymax-ymin+1)
+    x_coords, y_coords = np.meshgrid(x, y, indexing='ij')
+    classified_coords = get_classified_grid(x_coords, y_coords, med, case_1_classes)
 
-    for row in classified_grid:
-        print(row)
-    create_boundary(classified_grid)
+    plt.contourf(x_coords, y_coords, classified_coords, cmap='Paired')
+
+    # Plot points
+    # Reset colours
+    plt.gca().set_prop_cycle(None)
+    for c in case_1_classes:
+        plt.scatter(c.x[0, :], c.x[1, :], cmap='Paired', label=f'{c.name}')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
