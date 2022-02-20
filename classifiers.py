@@ -28,9 +28,6 @@ def create_boundary(classified_grid):
     plt.legend()
     plt.show()
 
-def paint_by_numbers(classified_grid):
-    plt.plot()
-    pass
 
 
 def get_classified_grid(x_coords, y_coords, classifier_function, classes):
@@ -71,7 +68,7 @@ def med(x, y, classes):
 
 def ged(x, y, classes):
     """
-
+    Classify a particular point on the grid using GED classification
     :param x: x coord of grid point
     :param y: y coord of grid point
     :param classes: list of cluster objects with mu and sigma information
@@ -103,42 +100,108 @@ def ged(x, y, classes):
             return 1
 
 
-
-
 def map_classifier(x, y, classes):
     """
-    Classify whether x belongs to class K given the kth mean, sigma, and prior
-    :param x: first dimension of pattern
-    :param y: second dimension of pattern
-    :return: 0, 1 for the binary classes
+    Classify a point (x, y) into classes using MAP
+    We choose the class that maximizes the posterior P(A|x) = P(x|A)*P(A) / P(x)
+    Since P(x) is the same marginal for all cases, we want max(P(x|C_i)*P(C_i)) for C_i in classes
     """
     x = np.array([x, y]).reshape(2, 1)
+    posteriors = []
+    for c in classes:
+        liklihood = np.exp(-0.5 * (x - c.mu).T @ np.linalg.inv(c.sigma) @ (x - c.mu)) / (2 * np.pi * np.sqrt(det(c.sigma)))
+        prior = c.prior
+        posteriors.append(liklihood * prior)
+    idx = np.argmax(posteriors)
+    return idx
 
-    def _micd(x, c):
-        return (x - c.mu).T @ np.linalg.inv(c.sigma) @ (x - c.mu)
 
-    # Two class case
-    if _micd(x, classes[0]) - _micd(x, classes[1]) >  \
-            2 * np.log(classes[1].prior / classes[0].prior) + np.log(det(classes[0].sigma) / det(classes[1].sigma)):
-        return 0
-    else:
-        return 1
-
-def multi_class_map(x, y, classes):
+def nn(x, y, classes):
     """
-    Do MAP classification for multiple classes, pick whichever one is most common
+    Classify whether x belongs to class K given its nearest neighbour
     :param x: first dimension of pattern
     :param y: second dimension of pattern
-    :param classes: list of cluster objects
-    :return: int 0, 1, or 2 for the class
+    :return: 0, 1 or 2 for the classes
     """
-    # x = np.array([x, y]).reshape(2, 1)
-    class_names_to_index = {c.name: i for i, c in enumerate(classes)}
-    counter = Counter()
-    for combo in itertools.combinations(classes, 2):
-        counter.update(combo[map_classifier(x, y, combo)].name)
-    c_pred = counter.most_common(1)[0][0]
-    return class_names_to_index[c_pred]
+    x= np.array([x, y]).reshape(2,1)
+
+    def _euclid_distance(x, c):
+        d = []
+        for i in range(len(c.x[0])):
+            point = np.array([c.x[0][i], c.x[1][i]]).reshape(2,1)
+            d_point = ((x-point).T@(x-point))**(1/2)
+            d.append(d_point)
+        return d
+    
+    min_distances = []
+    
+    for c in classes:
+        distances = _euclid_distance(x, c)
+        min_distance = min(distances)
+        min_distances.append(min_distance)
+    
+    index = min_distances.index(min(min_distances))
+    return index
+
+def knn(x, y, classes):
+    """
+    Classify whether x belongs to class K based on K-nearest neighbour (K=5)
+    :param x: first dimension of pattern
+    :param y: second dimension of pattern
+    :return: 0, 1, or 2 for the class
+    """
+    x= np.array([x, y]).reshape(2,1)
+    
+    def _euclid_distance(x, c):
+        d = []
+        for i in range(len(c.x[0])):
+            point = np.array([c.x[0][i], c.x[1][i]]).reshape(2,1)
+            d_point = ((x-point).T@(x-point))**(1/2)
+            d.append(d_point)
+        return d
+    
+    average_min_distances = []
+    for c in classes:
+        distances = _euclid_distance(x, c)
+        distances.sort()
+        top_5 = distances[0:5]
+        average_min_distance = sum(top_5)/len(top_5)
+        average_min_distances.append(average_min_distance)
+    
+    index = average_min_distances.index(min(average_min_distances))
+    return index
+
+    
+def confusion_matrix(classes, classifier):
+    """
+    Generate confusion matrix of data in classes based on classifier
+    :param classes: list of Cluster objects where Cluster.x is data to classify
+    :return cm: np.ndarray confusion matrix of shape (len(classes), len(classes))
+    """
+    temp = []
+    cm = np.zeros((len(classes), len(classes)))
+    for c in classes:
+        x = c.x
+        output = []
+        for i in range(x.shape[1]):
+            output.append(classifier(x[0, i], x[1, i], classes))
+        temp.append(Counter(output))
+    for i, counter in enumerate(temp):
+        for j, val in counter.items():
+            cm[i, j] = val
+    return cm
+    
+    return
+
+
+    # all_points =[]
+    # for c in classes:
+    #     all_points.append(c.x)
+
+    # closest = min(all_points, key= lambda i: _euclid_distance(x, i)
+        
+    
+    return 
 
 
 
