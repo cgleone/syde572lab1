@@ -190,8 +190,16 @@ def confusion_matrix(classes, classifier):
         for j, val in counter.items():
             cm[i, j] = val
     return cm
-    
-    return
+
+
+def error_rate(cm):
+    """Compute error rate based on confusion matrix.
+    Correct elements are on diagonal, incorrect are off diagonal
+    So trace(cm) / sum(cm) is proportion correct, 1-correct is error rate
+    :param cm: numpy square array of confusion matrix
+    :return: error rate, float between 0 and 1
+    """
+    return 1 - (cm.trace() / cm.sum())
 
 
     # all_points =[]
