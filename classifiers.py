@@ -35,16 +35,6 @@ def get_classified_grid(x_coords, y_coords, classifier_function, classes):
     grid = classifier_function(x_coords, y_coords, classes)
     return grid
 
-"""
-xs = np.arange(-8, 8, 0.1)
-ys = np.arange(-8, 8, 0.1)
-xx, yy = np.meshgrid(xs, ys, indexing='ij')
-out_grid = np.zeros((160, 160))
-for i in range(xs.size):
-    for j in range(ys.size):
-        point = np.array([xx[i,j], yy[i, j]])
-        out_grid[i, j] = nn.forward(point)  # Predict the class of this point
-"""
 
 def med(x, y, classes):
     """
@@ -203,7 +193,19 @@ def confusion_matrix(classes, classifier):
     
     return 
 
+def plot_classified_data(classified_data, classes):
+    plt.contour(x_coords, y_coords, classified_data, cmap='Paired', levels=[0, 1, 2])
 
+    # Plot points
+    # Reset colours
+    plt.gca().set_prop_cycle(None)
+    for c in classes:
+        plt.scatter(c.x[0, :], c.x[1, :], cmap='Paired', label=f'{c.name}')
+    plt.legend()
+    plt.title("Data Classified Using Generalized Euclidean Distance")
+
+    plt.tight_layout()
+    plt.show()
 
 if __name__ == '__main__':
 
@@ -212,18 +214,17 @@ if __name__ == '__main__':
 
     ymin, ymax, xmin, xmax = -10, 30, -10, 30
     step = 1
-    x = np.linspace(xmin, xmax, int((xmax-xmin+1)/step))
-    y = np.linspace(ymin, ymax, ymax-ymin+1)
+    count = int((xmax-xmin+1)/step)
+    x = np.linspace(xmin, xmax, count)
+    y = np.linspace(ymin, ymax, count)
     x_coords, y_coords = np.meshgrid(x, y, indexing='ij')
-    classified_coords = get_classified_grid(x_coords, y_coords, med, case_1_classes)
+    classified_array = np.zeros_like(x_coords)
 
-    plt.contourf(x_coords, y_coords, classified_coords, cmap='Paired')
+    for i in range(count):
+        for j in range(count):
+            for k in range(count):
+                classified = ged(x_coords[i][j], y_coords[i][j], case_2_classes)
+                classified_array[i, j] = classified
 
-    # Plot points
-    # Reset colours
-    plt.gca().set_prop_cycle(None)
-    for c in case_1_classes:
-        plt.scatter(c.x[0, :], c.x[1, :], cmap='Paired', label=f'{c.name}')
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+    plot_classified_data(classified_array, case_2_classes)
+
