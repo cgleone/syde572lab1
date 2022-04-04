@@ -180,8 +180,48 @@ def confusion_matrix(classes, classifier):
         for j, val in counter.items():
             cm[i, j] = val
     return cm
+
+def confusion_matrix_nn(classes, classifier):
     
-    return
+    # Split into training and testing points
+    temp = []
+    cm = np.zeros((len(classes), len(classes)))
+    train_classes = []
+    test_classes = []
+    for c in classes:
+        np.random.seed(0)
+        train_class = generating_clusters.Cluster(c.mu, c.sigma, c.prior, N = int(len(c.x[0])*0.5), name='train')
+        train_classes.append(train_class)
+        np.random.seed(7)
+        test_class = generating_clusters.Cluster(c.mu, c.sigma, c.prior, N = int(len(c.x[0])*0.5), name='test')
+        test_classes.append(test_class)
+    
+    for i in range(len(classes)):
+        x_test = test_classes[i].x
+        output = []
+        for i in range(x_test.shape[1]):
+            output.append(classifier(x_test[0, i], x_test[1, i], train_classes))
+        temp.append(Counter(output))
+    
+    
+    for i, counter in enumerate(temp):
+        for j, val in counter.items():
+            cm[i, j] = val
+    
+    np.random.seed(0)
+    
+    return cm
+
+
+
+def error_rate(cm):
+    """Compute error rate based on confusion matrix.
+    Correct elements are on diagonal, incorrect are off diagonal
+    So trace(cm) / sum(cm) is proportion correct, 1-correct is error rate
+    :param cm: numpy square array of confusion matrix
+    :return: error rate, float between 0 and 1
+    """
+    return 1 - (cm.trace() / cm.sum())
 
 
     # all_points =[]
